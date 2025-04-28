@@ -1,6 +1,6 @@
 ---
 title: "SDS 291 Final Project: Topic and Data Selection"
-author: "Miya Dang, Mia Tran"
+author: "Miya Dang, Mia Tran, Alua Birgebayeva"
 date: "Monday, April 28, 2025"
 format: 
   pdf:
