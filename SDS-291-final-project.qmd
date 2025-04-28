@@ -16,3 +16,31 @@ format:
       - top=1in
       - bottom=1in
 ---
+
+# Data
+
+Describe the data that you plan to use and the place/site that you sourced it from
+
+# Research Question/Purpose
+
+What specific question(s) do you hope to answer/what specifically do you hope to learn from analyzing these data with a regression model?
+
+# Response Variable
+
+Identify which variable from the data set will be your response variable.
+
+– If your outcome is numeric, explain: What are its units of measurement? What range of possible values can it take on?
+
+– If your outcome is categorical, explain: What are the levels of this variable? Which is considered a “success”, and which is considered “failure”?
+
+# Explanatory Variables
+
+Identify the explanatory variables that you plan to include in the richest possible model you consider. For each of these, explain:
+
+– If the explanatory variable is numeric: What are its units of measurement? What range of possible values can it take on?
+
+– If the explanatory variable is categorical, explain: What are the levels of this variable
+
+# Exploratory Visualizations
+
+To support your argument that you can use this data to address your question(s) of interest, create at least two exploratory data visualizations showing the relationships between variables of interest in your data
