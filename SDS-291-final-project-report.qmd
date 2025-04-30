@@ -18,11 +18,25 @@ format:
 editor_options: 
   chunk_output_type: inline
 ---
+# Abstract
 
-```{r, echo = FALSE}
+# Introduction
+
+# Methods
+
+## Exploratory Data Analysis
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# Loading necessary packages
+library(gtsummary)
 library(ggplot2)
+library(tidyr)
+library(pROC)
+
+# Reading csv
 heart_data <- read.csv("heart_failure_clinical_records_dataset.csv")
 
+# Factoring categorical variables
 heart_data$anaemia <- factor(heart_data$anaemia)
 heart_data$diabetes <- factor(heart_data$diabetes)
 heart_data$high_blood_pressure <- factor(heart_data$high_blood_pressure)
@@ -30,27 +44,57 @@ heart_data$sex <- factor(heart_data$sex)
 heart_data$smoking <- factor(heart_data$smoking)
 heart_data$DEATH_EVENT <- factor(heart_data$DEATH_EVENT)
 
-summary(heart_data)
+# EDA summary table
+tbl_summary(heart_data)
 ```
 
-```{r}
-# Selecting models by doing backward elimination using nested F test
+Boxplots for Ejection Fraction and Serum Creatinine by Death Event
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Reshape data to long format
+heart_data_long <- heart_data %>%
+  pivot_longer(
+    cols = c(ejection_fraction, serum_creatinine),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+# Create labels for faceting
+variable_labels <- c(
+  "ejection_fraction" = "Ejection Fraction (%)",
+  "serum_creatinine" = "Serum Creatinine (mg/dL)"
+)
+
+# Create combined plot
+ggplot(heart_data_long, aes(x = factor(DEATH_EVENT), y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(x = "Death Event (0 = Alive, 1 = Dead)",
+       title = "Ejection Fraction and Serum Creatinine by Death Event"
+  )
+```
+
+
+## Select Variables
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# Selecting models by doing backward elimination using nested F test (p-value = 0.1)
 
 heart_full <- glm(DEATH_EVENT ~ age + anaemia + creatinine_phosphokinase + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking + time, data = heart_data, family = "binomial")
 
-drop1(heart_full, test = "F")
+# drop1(heart_full, test = "F")
 drop1_heart <- update(heart_full, . ~ . - anaemia)
-drop1(drop1_heart, test = "F")
+# drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - smoking)
-drop1(drop1_heart, test = "F")
+# drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - high_blood_pressure)
-drop1(drop1_heart, test = "F")
+# drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - diabetes)
-drop1(drop1_heart, test = "F")
+#  drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - platelets)
-drop1(drop1_heart, test = "F")
+#  drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - creatinine_phosphokinase)
-drop1(drop1_heart, test = "F")
+# drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - sex)
 drop1(drop1_heart, test = "F")
 ```
