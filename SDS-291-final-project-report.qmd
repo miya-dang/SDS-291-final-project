@@ -104,6 +104,9 @@ final_model <- drop1_heart
 summary(final_model)
 
 # Model diagnostics
+# Cooks Distance
+
+
 # Influential points
 
 # Multicollinearity
