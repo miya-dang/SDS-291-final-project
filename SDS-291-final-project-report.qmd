@@ -32,6 +32,7 @@ library(gtsummary)
 library(ggplot2)
 library(tidyr)
 library(pROC)
+library(car)
 
 # Reading csv
 heart_data <- read.csv("heart_failure_clinical_records_dataset.csv")
@@ -97,6 +98,18 @@ drop1_heart <- update(drop1_heart, . ~ . - creatinine_phosphokinase)
 # drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - sex)
 drop1(drop1_heart, test = "F")
+
+# Final model after moving variables
+final_model <- drop1_heart
+summary(final_model)
+
+# Model diagnostics
+# Influential points
+
+# Multicollinearity
+vif(final_model)
+
+# Model performance
 ```
 
 
