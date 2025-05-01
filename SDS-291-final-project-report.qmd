@@ -141,7 +141,53 @@ plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
 # Multicollinearity
 vif(final_model)
 
-# Model performance
 ```
+
+Model performance
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+new_data <- read.csv("heart_failure_clinical_records_dataset.csv")
+new_data$anaemia <- factor(new_data$anaemia)
+new_data$diabetes <- factor(new_data$diabetes)
+new_data$high_blood_pressure <- factor(new_data$high_blood_pressure)
+new_data$sex <- factor(new_data$sex)
+new_data$smoking <- factor(new_data$smoking)
+new_data$DEATH_EVENT <- factor(new_data$DEATH_EVENT)
+
+# Get predicted probabilities for new data
+new_pred <- augment(final_model, newdata = new_data, type.predict = "response")
+
+# Classify using 0.5 threshold
+new_classify <- new_pred |>
+  mutate(pred = ifelse(.fitted > 0.5, "Dead", "Alive"))
+
+# Actual vs. Predicted table with margins
+compare_table <- new_classify |>
+  select(DEATH_EVENT, pred) |>
+  table() |>
+  addmargins()
+
+# Calculate sensitivity, specificity, accuracy
+sensitivity <- compare_table[2, 2] / compare_table[2, 3]
+specificity <- compare_table[1, 1] / compare_table[1, 3]
+accuracy <- (compare_table[1, 1] + compare_table[2, 2]) / compare_table[3, 3]
+
+# Create ROC object
+voting_roc <- roc(
+  response = new_classify$DEATH_EVENT,
+  predictor = new_classify$.fitted,
+  quiet = TRUE
+)
+
+# Calculate AUC
+auc_value <- auc(voting_roc)
+
+# Results
+cat("Sensitivity:", sensitivity, "\n")
+cat("Specificity:", specificity, "\n")
+cat("Accuracy:", accuracy, "\n")
+cat("AUC:", auc_value, "\n")
+```
+
 
 
