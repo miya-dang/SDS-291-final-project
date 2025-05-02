@@ -111,9 +111,11 @@ summary(final_model)
 case_influence <- final_model |> augment()
 case_influence <- case_influence |> mutate(row_id = row_number())
 case_influence |> select(.hat)
+
 # Calculating the threshold for unusually high leverage
 k_plus_one <- length(coef(final_model))
 n <- nrow(heart_data)
+
 # Filtering the data to determine which observations have unusually high leverage
 leverage_index <- case_influence |> filter(.hat > 2 * k_plus_one/n) |> select(row_id) |> pull()
 heart_data[leverage_index, ]
@@ -128,12 +130,33 @@ case_influence <- case_influence |> mutate(.stu.resid = rstudent(final_model))
 stu_resid_id <- case_influence |> filter(.stu.resid < -2 | .stu.resid > 2) |> select(row_id) |> pull()
 heart_data[stu_resid_id, ]
 
+# Plotting the studentized residuals against the observation row numbers
+case_influence |>
+  ggplot(aes(x = row_id, y = .stu.resid)) + geom_point() + 
+  geom_hline(yintercept = -2, col = "red") +
+  geom_hline(yintercept = 2, col = "red") +
+  xlab("Row ID") + ylab("Studentized Residual")
+
+# Determining which observations have unusually large studentized residuals
+stu_resid_id <- case_influence |>
+  filter(.stu.resid < -2 | .stu.resid > 2) |>
+  select(row_id) |>
+  pull()
+
+heart_data[stu_resid_id, ]
+
 # Cook's dxistance
 case_influence |> select(.cooksd)
 case_influence |> filter(.cooksd > 1)
 cooksd_id <- case_influence |> filter(.cooksd > 1) |> select(row_id) |> pull()
 heart_data[cooksd_id, ]
 
+# Plotting the Cook's distances against the observation row numbers
+case_influence |>
+  ggplot(aes(x = row_id, y = .cooksd)) +
+  geom_point() + 
+  geom_hline(yintercept = 1, col = "red") +
+  xlab("Row ID") + ylab("Cook's Distance")
 
 # Checking conditions using Deviance residual plot
 plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
