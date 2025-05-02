@@ -104,13 +104,16 @@ drop1_heart <- update(drop1_heart, . ~ . - sex)
 # Final model after moving variables
 final_model <- drop1_heart
 summary(final_model)
+```
 
+## Model diagnostics
+
+```{r}
 # Model diagnostics
 
 # Leverage
 case_influence <- final_model |> augment()
 case_influence <- case_influence |> mutate(row_id = row_number())
-case_influence |> select(.hat)
 
 # Calculating the threshold for unusually high leverage
 k_plus_one <- length(coef(final_model))
@@ -125,7 +128,6 @@ case_influence |> ggplot(aes(x = row_id, y = .hat)) + geom_point() +
   xlab("") + ylab("Leverage")
 
 # Studentized residuals
-rstudent(final_model)
 case_influence <- case_influence |> mutate(.stu.resid = rstudent(final_model))
 stu_resid_id <- case_influence |> filter(.stu.resid < -2 | .stu.resid > 2) |> select(row_id) |> pull()
 heart_data[stu_resid_id, ]
@@ -145,18 +147,31 @@ stu_resid_id <- case_influence |>
 
 heart_data[stu_resid_id, ]
 
-# Cook's dxistance
+# Cook's distance
 case_influence |> select(.cooksd)
-case_influence |> filter(.cooksd > 1)
-cooksd_id <- case_influence |> filter(.cooksd > 1) |> select(row_id) |> pull()
+case_influence |> filter(.cooksd > 0.05)
+cooksd_id <- case_influence |> filter(.cooksd > 0.05) |> select(row_id) |> pull()
 heart_data[cooksd_id, ]
 
 # Plotting the Cook's distances against the observation row numbers
 case_influence |>
   ggplot(aes(x = row_id, y = .cooksd)) +
   geom_point() + 
-  geom_hline(yintercept = 1, col = "red") +
+  geom_hline(yintercept = 0.05, col = "red") +
   xlab("Row ID") + ylab("Cook's Distance")
+
+# Define the row indices of the influential observations
+influential_rows <- c(132, 218, 229)
+
+# Remove these rows from the heart_data dataset
+heart_data_clean <- heart_data[-influential_rows, ]
+
+# Refit the logistic regression model on the cleaned data
+final_model_clean <- glm(DEATH_EVENT ~ age + anaemia + creatinine_phosphokinase + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking + time, data = heart_data_clean, family = "binomial")
+
+# Summarize the new model
+summary(final_model_clean)
+
 
 # Checking conditions using Deviance residual plot
 plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
@@ -166,7 +181,7 @@ vif(final_model)
 
 ```
 
-Model performance
+## Model performance
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 new_data <- read.csv("heart_failure_clinical_records_dataset.csv")
