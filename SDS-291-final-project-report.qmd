@@ -18,16 +18,10 @@ format:
 editor_options: 
   chunk_output_type: inline
 ---
-# Abstract
-
-# Introduction
-
-# Methods
-
-## Exploratory Data Analysis
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 # Loading necessary packages
+library(kableExtra)
 library(gtsummary)
 library(ggplot2)
 library(tidyr)
@@ -45,13 +39,55 @@ heart_data$diabetes <- factor(heart_data$diabetes)
 heart_data$high_blood_pressure <- factor(heart_data$high_blood_pressure)
 heart_data$sex <- factor(heart_data$sex)
 heart_data$smoking <- factor(heart_data$smoking)
-heart_data$DEATH_EVENT <- factor(heart_data$DEATH_EVENT)
-
-# EDA summary table
-tbl_summary(heart_data)
+heart_data$DEATH_EVENT <- factor(heart_data$DEATH_EVENT, levels = c(0,1), 
+                         labels = c("Alive", "Deceased"))
 ```
 
-Boxplots for Ejection Fraction and Serum Creatinine by Death Event
+# Abstract
+
+This project analyzes the Heart Failure Clinical Records Dataset to identify key predictors of mortality among patients with heart failure. Using logistic regression and backward elimination, we developed a final model with five variables: age, ejection fraction, serum creatinine, serum sodium, and follow-up time. Model diagnostics confirmed the robustness of our approach, and performance metrics indicated strong predictive ability (sensitivity: 81.3%, specificity: 79.3%, AUC: 0.89). Our findings suggest that commonly available clinical variables can effectively predict patient outcomes and support early risk assessment in heart failure management.
+
+# Introduction
+
+Heart failure is a leading cause of mortality and hospitalization worldwide, especially among older adults. Identifying patients at high risk of death can improve clinical decision-making and patient care. In this study, we aim to determine which clinical and demographic factors are most predictive of mortality among heart failure patients using the Heart Failure Clinical Records Dataset.
+
+Our research question is: ***Which variables best predict death during the follow-up period after a heart failure diagnosis?***
+
+We apply logistic regression with backward elimination to build a parsimonious and interpretable model. Prior studies have highlighted the roles of age, ejection fraction, and kidney function in heart failure outcomes (Choi et al., 2017; Ahmad et al., 2018), but many models lack transparency or validation. This project contributes a validated model using routine clinical measures and emphasizes model diagnostics to ensure reliability. Our goal is to support early risk assessment in heart failure using accessible patient data.
+
+# Methods
+
+### Dataset Description
+
+The dataset we analyzed in this study is the Heart Failure Clinical Records Dataset, originally sourced from the UCI Machine Learning Repository. It contains the medical records of 299 patients who experienced heart failure, collected during their clinical follow-up period. Each observation is a patient profile. The response variable, DEATH_EVENT, is a binary outcome indicating whether a patient died during the follow-up period (1 = deceased, 0 = alive). All eleven explanatory variables were initially considered, including demographic factors, clinical profile, as well as laboratory blood tests measurements. Details about each variable can be seen in Table 1. No missing data were reported in the dataset.
+
+### Data Processing and Exploratory Data Analysis
+
+The dataset was imported into R, and all categorical variables were recoded into factors.
+
+An exploratory data analysis was performed using summary statistics and visualizations. The median age of participants was 60 years (IQR: 51--70), and 32% died during the follow-up period. The median serum creatinine level was 1.10 mg/dL (IQR: 0.90--1.40), and the median ejection fraction was 38% (IQR: 30--45). Two boxplots were created to compare the distributions of ejection fraction (%) and serum creatinine (mg/dL) by death event (Figure 1). These plots indicated that patients who died tended to have lower ejection fractions and higher serum creatinine levels, supporting the inclusion of these variables in subsequent modeling.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# EDA summary table
+tbl_summary(heart_data,
+            label = list(
+              age ~ "age: age of the patient (years)",
+              anaemia ~ "anaemia: decrease of red blood cells or hemoglobin (0 = No, 1 = Yes)",
+              creatinine_phosphokinase ~ "creatinine_phosphokinase: level of the CPK enzyme in the blood (mcg/L)",
+              diabetes ~ "diabetes: if the patient has diabetes (0 = No, 1 = Yes)",
+              ejection_fraction ~ "ejection_fraction: % of blood leaving the heart at each contraction (%)",
+              high_blood_pressure ~ "high_blood_pressure: if the patient has hypertension (0 = No, 1 = Yes)",
+              platelets ~ "platelets: platelets in the blood (kiloplatelets/mL)",
+              sex ~ "sex: 0 = Woman, 1 = Man",
+              serum_creatinine ~ "serum_creatinine: level of serum creatinine in the blood (mg/dL)",
+              serum_sodium ~ "serum_sodium: level of serum sodium in the blood (mEq/L)",
+              smoking ~ "smoking: if the patient smokes (0 = No, 1 = Yes)",
+              time ~ "time: length of follow-up period (days)",
+              DEATH_EVENT ~ "DEATH_EVENT: if the patient died during the follow-up period (0 = No, 1 = Yes)"
+            ))  %>%
+  as_kable_extra(format = "latex", booktabs = TRUE, caption = "Summary of Heart Failure Dataset")
+```
+
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 
 # Reshape data to long format
@@ -72,13 +108,39 @@ variable_labels <- c(
 ggplot(heart_data_long, aes(x = factor(DEATH_EVENT), y = value)) +
   geom_boxplot() +
   facet_wrap(~ variable, scales = "free_y") +
-  labs(x = "Death Event (0 = Alive, 1 = Dead)",
-       title = "Ejection Fraction and Serum Creatinine by Death Event"
+  labs(x = "Death Event (0 = Alive, 1 = Deceased)",
+       title = "Figure 1. Ejection Fraction and Serum Creatinine by Death Event"
   )
 ```
 
+### Variable Selection
 
-## Select Variables
+To identify potential predictors of mortality, we applied backward elimination to a full multiple logistic regression model containing 11 predictors. The selection process used nested F-tests with a retention threshold of p \< 0.1. Variables with the highest p-values were removed sequentially until all remaining predictors had p-values below the threshold. Variables removed sequentially included anaemia, smoking, high_blood_pressure, diabetes, platelets, creatinine_phosphokinase, and sex. The final model retained five predictors: age, ejection_fraction, serum_creatinine, serum_sodium, and time.
+
+The population form of the final model is defined as follows:
+
+$$
+\begin{aligned}
+\text{logit}(P(\text{Deceased} = 1)) =\ & \beta_0 + \beta_1 \text{ (Age)} + \beta_2 \text{ (Eject Frac)} + \beta_3 \text{ (Serum Creatinine)} \\
+& + \beta_4 \text{ (Serum Sodium}) + \beta_5 \text{ (Time)}
+\end{aligned}
+$$
+
+Where:
+
+-   $\text{logit}(P(\text{Deceased} = 1))$: The log-odds of the probability that the binary outcome "Deceased" equals 1.
+
+-   $\beta_0$: The intercept, the baseline log-odds of death when all predictors are zero. This is not particularly meaningful on its own, but it serves as a baseline for predictions.
+
+-   $\beta_1$: The slope for Age, the change in the log-odds of death for each 1 year increase in age, holding other variables constant.
+
+-   $\beta_2$: The slope for Ejection Fraction, the change in the log-odds of death for each 1% increase in ejection fraction (percentage of blood leaving the heart at each contraction), holding other variables constant.
+
+-   $\beta_3$: The slope for Serum Creatinine, the change in the log-odds of death for each 1 mg/dL increase in the level of serum creatinine in the blood, holding other variables constant.
+
+-   $\beta_4$: The slope for Serum Sodium, the change in the log-odds of death for each 1 mEq/L increase in the level of serum sodium in the blood, holding other variables constant.
+
+-   $\beta_5$: The slope for Time, the change in the log-odds of death for each 1 day increase in the length of the follow-up period, holding other variables constant.
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 # Selecting models by doing backward elimination using nested F test (p-value = 0.1)
@@ -103,8 +165,152 @@ drop1_heart <- update(drop1_heart, . ~ . - sex)
 
 # Final model after moving variables
 final_model <- drop1_heart
-summary(final_model)
 
+final_model_table <- summary(final_model)$coefficients
+final_model_table |> 
+  kbl(col.names = c("Estimate", "Std. Error", "t value", "Pr(>|t|)"), 
+      align = "c",
+      booktabs = TRUE,
+      linesep = "",
+      digits = c(4, 4, 4, 5),
+      caption = "Coefficient Estimates from Final Model") |>
+  kable_classic(full_width = FALSE, latex_options = c("HOLD_position"))
+```
+
+### Model Diagnostics: Influential Points and Model Assumptions
+
+We then investigated influential observations and assessed model assumptions to ensure the reliability of our logistic regression model. To identify unusual points, we examined leverage, studentized residuals, and Cook's distance for all observations. Observations with leverage values greater than $\frac{2(k+1)}{n}$ and studentized residuals $> 2$ or $< -2$ were flagged as potentially influential. Initially, we used a threshold of $\frac{4}{n}$ for Cook's distance, which flagged 29 observations as influential, which is nearly 10% of the dataset. However, upon visual inspection of the Cook's distance plot, most of these points clustered closely with the rest of the data and did not appear to exert a disproportionate influence on the model. Only three observations (rows 132, 218, and 229) were clearly distant from the majority, with Cook's distance values exceeding 0.05. We therefore adopted 0.05 as a more appropriate threshold and focused on these three points, which were also consistently flagged across all diagnostic metrics. Further inspection revealed that these three observations had unusually high serum creatinine levels (6.1, 9.0, and 5.0). While these values are high, they are not uniquely extreme within the dataset as several other cases also exhibited elevated serum creatinine levels above 3.0. These high values are clinically plausible and likely reflect cases of severe kidney dysfunction, a condition frequently associated with heart failure and increased mortality risk. Therefore, there is no indication that these values are due to data entry or recording errors. Additionally, serum creatinine remained a statistically significant and clinically meaningful predictor in both the original model and the clean model that excluded them, with consistent effect sizes and p-values. Importantly, model performance metrics such as AIC, deviance, and coefficient estimates did not change substantially after excluding these observations. Based on this evidence, we concluded that the flagged cases represent valid and meaningful variation in the data and chose to retain them in the final model to maintain the integrity and generalizability of our findings.
+
+We assessed multicollinearity among our predictors by calculating Variance Inflation Factors (VIFs). All VIFs fell between 1.03 and 1.13, indicating minimal correlation among the covariates and reassuring us that our coefficient estimates are stable and interpretable. Next, we generated a deviance‐residual plot to evaluate model fit and again identify any unusual observations. The residuals are scattered randomly around zero without any clear pattern across the observation index, suggesting the model does not systematically over- or under-predict in different regions of the data. Moreover, all deviance residuals lie within the range of --3 to +3, and there are no points that stand apart from the main cluster. Together, these diagnostics confirm that our model assumptions hold and that no extreme outliers warrant removal.
+
+### Model Performance
+
+We evaluated the model's performance using sensitivity, specificity, accuracy, and the area under the ROC curve (AUC). To reduce the risk of missing actual mortality cases, we selected a lower classification threshold of $\pi_0 = 0.3$, prioritizing sensitivity over specificity. Using this cutoff, we calculated the corresponding performance metrics to assess how well the model distinguishes between patients who survived and those who died.
+
+-   Sensitivity (0.8125): The model correctly identifies 81.3% of individuals who died (DEATH_EVENT = 1). This indicates strong performance in detecting patients at high risk of death, which is especially important in clinical settings where failing to identify at-risk patients could have serious consequences.
+
+-   Specificity (0.7931034): The model correctly classifies 79.3% of individuals who survived (DEATH_EVENT = 0). This means it is also reasonably effective at minimizing false positives, avoiding misclassifying living patients as deceased.
+
+-   Accuracy (0.7993311): The model achieves an overall accuracy of approximately 79.9%, meaning it correctly classifies nearly 80% of all cases, whether alive or dead. This suggests strong overall predictive ability.
+
+-   AUC (0.8935242): The model has excellent discriminative ability, with an AUC of 0.8935. This indicates that it can distinguish between patients who died and those who survived substantially better than random chance, and approaches the performance of a highly reliable classifier.
+
+# Results
+
+# Discussion
+
+# Data Analysis Appendix
+
+### Import dataset, preparing data, load packages
+
+```{r, warning = FALSE, message = FALSE}
+# Loading necessary packages
+library(kableExtra)
+library(gtsummary)
+library(ggplot2)
+library(tidyr)
+library(pROC)
+library(car)
+library(dplyr)
+library(broom)
+
+# Reading csv
+heart_data <- read.csv("heart_failure_clinical_records_dataset.csv")
+
+# Factoring categorical variables
+heart_data$anaemia <- factor(heart_data$anaemia)
+heart_data$diabetes <- factor(heart_data$diabetes)
+heart_data$high_blood_pressure <- factor(heart_data$high_blood_pressure)
+heart_data$sex <- factor(heart_data$sex)
+heart_data$smoking <- factor(heart_data$smoking)
+heart_data$DEATH_EVENT <- factor(heart_data$DEATH_EVENT, levels = c(0,1), 
+                         labels = c("Alive", "Deceased"))
+```
+
+### EDA
+
+```{r, warning = FALSE, message = FALSE}
+# EDA summary table
+tbl_summary(heart_data,
+            label = list(
+              age ~ "age: age of the patient (years)",
+              anaemia ~ "anaemia: decrease of red blood cells or hemoglobin (0 = No, 1 = Yes)",
+              creatinine_phosphokinase ~ "creatinine_phosphokinase: level of the CPK enzyme in the blood (mcg/L)",
+              diabetes ~ "diabetes: if the patient has diabetes (0 = No, 1 = Yes)",
+              ejection_fraction ~ "ejection_fraction: % of blood leaving the heart at each contraction (%)",
+              high_blood_pressure ~ "high_blood_pressure: if the patient has hypertension (0 = No, 1 = Yes)",
+              platelets ~ "platelets: platelets in the blood (kiloplatelets/mL)",
+              sex ~ "sex: 0 = Woman, 1 = Man",
+              serum_creatinine ~ "serum_creatinine: level of serum creatinine in the blood (mg/dL)",
+              serum_sodium ~ "serum_sodium: level of serum sodium in the blood (mEq/L)",
+              smoking ~ "smoking: if the patient smokes (0 = No, 1 = Yes)",
+              time ~ "time: length of follow-up period (days)",
+              DEATH_EVENT ~ "DEATH_EVENT: if the patient died during the follow-up period (0 = No, 1 = Yes)"
+            ))  %>%
+  as_kable_extra(format = "latex", booktabs = TRUE, caption = "Summary of Heart Failure Dataset")
+
+# Accompanying graph
+# Reshape data to long format
+heart_data_long <- heart_data %>%
+  pivot_longer(
+    cols = c(ejection_fraction, serum_creatinine),
+    names_to = "variable",
+    values_to = "value"
+  )
+# Create labels for faceting
+variable_labels <- c(
+  "ejection_fraction" = "Ejection Fraction (%)",
+  "serum_creatinine" = "Serum Creatinine (mg/dL)"
+)
+# Create combined plot
+ggplot(heart_data_long, aes(x = factor(DEATH_EVENT), y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(x = "Death Event (0 = Alive, 1 = Deceased)",
+       title = "Figure 1. Ejection Fraction and Serum Creatinine by Death Event"
+  )
+```
+
+### Select variables
+
+```{r, warning = FALSE, message = FALSE}
+# Selecting variables by doing backward elimination using nested F test (p-value = 0.1)
+
+heart_full <- glm(DEATH_EVENT ~ age + anaemia + creatinine_phosphokinase + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking + time, data = heart_data, family = "binomial")
+
+# drop1(heart_full, test = "F")
+drop1_heart <- update(heart_full, . ~ . - anaemia)
+# drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - smoking)
+# drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - high_blood_pressure)
+# drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - diabetes)
+#  drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - platelets)
+#  drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - creatinine_phosphokinase)
+# drop1(drop1_heart, test = "F")
+drop1_heart <- update(drop1_heart, . ~ . - sex)
+# drop1(drop1_heart, test = "F")
+
+# Final model after moving variables
+final_model <- drop1_heart
+
+final_model_table <- summary(final_model)$coefficients
+final_model_table |> 
+  kbl(col.names = c("Estimate", "Std. Error", "t value", "Pr(>|t|)"), 
+      align = "c",
+      booktabs = TRUE,
+      linesep = "",
+      digits = c(4, 4, 4, 5),
+      caption = "Coefficient Estimates from Final Model") |>
+  kable_classic(full_width = FALSE, latex_options = c("HOLD_position"))
+```
+
+### Model diagnose
+
+```{r, warning = FALSE, message = FALSE}
 # Model diagnostics
 # Cooks Distance
 
@@ -114,10 +320,11 @@ summary(final_model)
 # Leverage
 case_influence <- final_model |> augment()
 case_influence <- case_influence |> mutate(row_id = row_number())
-case_influence |> select(.hat)
+
 # Calculating the threshold for unusually high leverage
 k_plus_one <- length(coef(final_model))
 n <- nrow(heart_data)
+
 # Filtering the data to determine which observations have unusually high leverage
 leverage_index <- case_influence |> filter(.hat > 2 * k_plus_one/n) |> select(row_id) |> pull()
 heart_data[leverage_index, ]
@@ -127,25 +334,103 @@ case_influence |> ggplot(aes(x = row_id, y = .hat)) + geom_point() +
   xlab("") + ylab("Leverage")
 
 # Studentized residuals
-rstudent(final_model)
 case_influence <- case_influence |> mutate(.stu.resid = rstudent(final_model))
 stu_resid_id <- case_influence |> filter(.stu.resid < -2 | .stu.resid > 2) |> select(row_id) |> pull()
 heart_data[stu_resid_id, ]
 
-# Cook's dxistance
+# Plotting the studentized residuals against the observation row numbers
+case_influence |>
+  ggplot(aes(x = row_id, y = .stu.resid)) + geom_point() + 
+  geom_hline(yintercept = -2, col = "red") +
+  geom_hline(yintercept = 2, col = "red") +
+  xlab("Row ID") + ylab("Studentized Residual")
+
+# Determining which observations have unusually large studentized residuals
+stu_resid_id <- case_influence |>
+  filter(.stu.resid < -2 | .stu.resid > 2) |>
+  select(row_id) |>
+  pull()
+
+heart_data[stu_resid_id, ]
+
+# Cook's distance
 case_influence |> select(.cooksd)
-case_influence |> filter(.cooksd > 1)
-cooksd_id <- case_influence |> filter(.cooksd > 1) |> select(row_id) |> pull()
+case_influence |> filter(.cooksd > 0.05)
+cooksd_id <- case_influence |> filter(.cooksd > 0.05) |> select(row_id) |> pull()
 heart_data[cooksd_id, ]
 
+# Plotting the Cook's distances against the observation row numbers
+case_influence |>
+  ggplot(aes(x = row_id, y = .cooksd)) +
+  geom_point() + 
+  geom_hline(yintercept = 0.05, col = "red") +
+  xlab("Row ID") + ylab("Cook's Distance")
 
-# Checking conditions using Deviance residual plot
-plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
+# Define the row indices of the influential observations
+influential_rows <- c(132, 218, 229)
+
+# Remove these rows from the heart_data dataset
+heart_data_clean <- heart_data[-influential_rows, ]
+
+# Refit the logistic regression model on the cleaned data
+final_model_clean <- glm(DEATH_EVENT ~ age + anaemia + creatinine_phosphokinase + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking + time, data = heart_data_clean, family = "binomial")
+
+# Summarize the new model
+summary(final_model_clean)
+
 
 # Multicollinearity
 vif(final_model)
 
-# Model performance
+# Checking conditions using Deviance residual plot
+plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
+
 ```
 
+### Model performance
 
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+new_data <- read.csv("heart_failure_clinical_records_dataset.csv")
+new_data$anaemia <- factor(new_data$anaemia)
+new_data$diabetes <- factor(new_data$diabetes)
+new_data$high_blood_pressure <- factor(new_data$high_blood_pressure)
+new_data$sex <- factor(new_data$sex)
+new_data$smoking <- factor(new_data$smoking)
+new_data$DEATH_EVENT <- factor(new_data$DEATH_EVENT, levels = c(0,1), 
+                         labels = c("Alive", "Deceased"))
+
+# Get predicted probabilities for new data
+new_pred <- augment(final_model, newdata = new_data, type.predict = "response")
+
+# Classify using 0.3 threshold
+new_classify <- new_pred |>
+  mutate(pred = ifelse(.fitted > 0.3, "Deceased", "Alive"))
+
+# Actual vs. Predicted table with margins
+compare_table <- new_classify |>
+  select(DEATH_EVENT, pred) |>
+  table() |>
+  addmargins()
+
+# Calculate sensitivity, specificity, accuracy
+sensitivity <- compare_table[2, 2] / compare_table[2, 3]
+specificity <- compare_table[1, 1] / compare_table[1, 3]
+accuracy <- (compare_table[1, 1] + compare_table[2, 2]) / compare_table[3, 3]
+
+
+# Create ROC object
+voting_roc <- roc(
+  response = new_classify$DEATH_EVENT,
+  predictor = new_classify$.fitted,
+  quiet = TRUE
+)
+
+# Calculate AUC
+auc_value <- auc(voting_roc)
+
+# Results
+cat("Sensitivity:", sensitivity, "\n")
+cat("Specificity:", specificity, "\n")
+cat("Accuracy:", accuracy, "\n")
+cat("AUC:", auc_value, "\n")
+```
