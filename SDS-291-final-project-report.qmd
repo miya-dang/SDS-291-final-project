@@ -33,6 +33,8 @@ library(ggplot2)
 library(tidyr)
 library(pROC)
 library(car)
+library(dplyr)
+library(broom)
 
 # Reading csv
 heart_data <- read.csv("heart_failure_clinical_records_dataset.csv")
@@ -97,7 +99,7 @@ drop1_heart <- update(drop1_heart, . ~ . - platelets)
 drop1_heart <- update(drop1_heart, . ~ . - creatinine_phosphokinase)
 # drop1(drop1_heart, test = "F")
 drop1_heart <- update(drop1_heart, . ~ . - sex)
-drop1(drop1_heart, test = "F")
+# drop1(drop1_heart, test = "F")
 
 # Final model after moving variables
 final_model <- drop1_heart
@@ -108,6 +110,37 @@ summary(final_model)
 
 
 # Influential points
+
+# Leverage
+case_influence <- final_model |> augment()
+case_influence <- case_influence |> mutate(row_id = row_number())
+case_influence |> select(.hat)
+# Calculating the threshold for unusually high leverage
+k_plus_one <- length(coef(final_model))
+n <- nrow(heart_data)
+# Filtering the data to determine which observations have unusually high leverage
+leverage_index <- case_influence |> filter(.hat > 2 * k_plus_one/n) |> select(row_id) |> pull()
+heart_data[leverage_index, ]
+
+case_influence |> ggplot(aes(x = row_id, y = .hat)) + geom_point() + 
+  geom_hline(yintercept = 2*k_plus_one/n, col = "red") +
+  xlab("") + ylab("Leverage")
+
+# Studentized residuals
+rstudent(final_model)
+case_influence <- case_influence |> mutate(.stu.resid = rstudent(final_model))
+stu_resid_id <- case_influence |> filter(.stu.resid < -2 | .stu.resid > 2) |> select(row_id) |> pull()
+heart_data[stu_resid_id, ]
+
+# Cook's dxistance
+case_influence |> select(.cooksd)
+case_influence |> filter(.cooksd > 1)
+cooksd_id <- case_influence |> filter(.cooksd > 1) |> select(row_id) |> pull()
+heart_data[cooksd_id, ]
+
+
+# Checking conditions using Deviance residual plot
+plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
 
 # Multicollinearity
 vif(final_model)
