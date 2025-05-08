@@ -196,8 +196,68 @@ We evaluated the model's performance using sensitivity, specificity, accuracy, a
 -   AUC (0.8935242): The model has excellent discriminative ability, with an AUC of 0.8935. This indicates that it can distinguish between patients who died and those who survived substantially better than random chance, and approaches the performance of a highly reliable classifier.
 
 # Results
+The final analysis included all 299 patients in the dataset. Although three observations were flagged as potentially influential, they were retained in the model after further diagnostics. Out of these 299 patients, 32% died during the follow-up period.
+
+The response variable, DEATH_EVENT, indicates whether a patient died during the follow-up period (1 = deceased, 0 = alive). The explanatory variables retained in the final model were age (in years), ejection fraction (percentage of blood leaving the heart per contraction), serum creatinine (mg/dL), serum sodium (mEq/L), and time (length of follow-up in days).These variables were selected through backward elimination using nested F-tests with a retention threshold of p < 0.1. The table below summarizes the estimated odds ratios, 95% confidence intervals, and p-values for each predictor in the model.
+
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+library(broom)
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+broom::tidy(final_model, conf.int = TRUE, exponentiate = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+mutate(term = dplyr::recode(term,
+  "age" = "Age",
+  "ejection_fraction" = "Ejection Fraction",
+  "serum_creatinine" = "Serum Creatinine",
+  "serum_sodium" = "Serum Sodium",
+  "time" = "Follow-up Time"
+)) %>%
+  select(term, estimate, conf.low, conf.high, p.value) %>%
+  knitr::kable(
+    col.names = c("Predictor", "Odds Ratio", "95% CI (Low)", "95% CI (High)", "p-value"),
+    digits = 3,
+    booktabs = TRUE,
+    caption = "Final Model: Odds Ratios and 95\\% Confidence Intervals"
+  ) %>%
+  kable_classic(full_width = FALSE, latex_options = "HOLD_position")
+
+```
+Each predictor in the final model had a clear association with the probability of death.
+
+- **Age**: Each additional year increased the odds of death by approximately 4.3% (OR = 1.043, 95% CI: [1.014, 1.076], p = 0.005).
+
+- **Ejection Fraction**: Each 1% increase reduced the odds of death by 7.1% (OR = 0.929, 95% CI: [0.899, 0.957], p < 0.001).
+
+- **Serum Creatinine**: Each 1 mg/dL increase more than doubled the odds of death (OR = 1.986, 95% CI: [1.421, 2.874], p < 0.001).
+
+- **Serum Sodium**: While not statistically significant, the odds ratio suggests a 6.3% decrease in risk per unit increase (OR = 0.937, 95% CI: [0.868, 1.011], p = 0.093).
+
+- **Follow-up Time**: Each additional day of follow-up was associated with a 2.1% decrease in the odds of death (OR = 0.979, 95% CI: [0.973, 0.985], p < 0.001).
+
+To evaluate model performance, we selected a classification threshold of $\pi$ = 0.3 to prioritize sensitivity. The model correctly identified 81.3% of patients who died (sensitivity) and 79.3% of patients who survived (specificity). Overall classification accuracy was 79.9%. The area under the ROC curve (AUC) was 0.8935, indicating excellent discriminative ability.
+
+Figure 1 shows boxplots of ejection fraction and serum creatinine by survival outcome. Patients who died had noticeably lower ejection fractions and higher creatinine levels, reinforcing their inclusion in the final model.
+
+These findings address our research question by identifying five routinely available variables that effectively predict mortality among patients with heart failure.
+
 
 # Discussion
+
+This study set out to answer the question: *Which variables best predict death during the follow-up period after a heart failure diagnosis?* Using logistic regression and backward elimination, we identified five key predictors: age, ejection fraction, serum creatinine, serum sodium, and follow-up time.
+
+Our results show that these variables are strong predictors of mortality. Older patients, those with lower ejection fractions, and those with higher serum creatinine levels were significantly more likely to die during follow-up. While serum sodium was not statistically significant at the 5% level (p = 0.093), its clinical relevance and borderline confidence interval supported its inclusion. Patients with longer follow-up times were less likely to die, suggesting that time itself may reflect survival resilience.
+
+These findings directly answer our research question and are supported by both statistical metrics and clinical interpretability. As shown in Table 3, odds ratios for the significant predictors were all in directions consistent with medical expectations. Figure 1 further reinforced these relationships, visually demonstrating that patients who died had lower ejection fractions and higher serum creatinine. Model performance metrics, including a high AUC (0.8935), sensitivity (81.3%), and specificity (79.3%), indicate that the model performs well as a classification tool.
+
+Despite these strengths, our analysis has several limitations. First, the dataset contains only 299 observations, which limits the generalizability of our findings. All data came from a single source, and we do not have access to variables such as treatment type, comorbidities, or socioeconomic status. These missing factors may introduce omitted variable bias. Additionally, our model assumes linearity in the log-odds and does not explore potential interactions or non-linear effects.
+
+Still, the study has notable strengths. The final model is interpretable, relies on common clinical measures, and passed all major diagnostic checks (e.g., residuals, Cook’s distance, VIFs). Our variable selection process used nested F-tests, and we retained cases flagged as influential only after confirming they did not distort results. These decisions reflect a balance between statistical rigor and real-world applicability.
+
+In summary, this analysis provides strong evidence that five routine clinical measures can meaningfully predict death in heart failure patients. However, our conclusions are specific to the dataset at hand and should not be generalized without further validation. These findings offer a starting point for clinicians or researchers seeking to build early warning tools using accessible patient data.
 
 # Data Analysis Appendix
 
