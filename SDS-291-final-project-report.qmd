@@ -196,9 +196,10 @@ We evaluated the model's performance using sensitivity, specificity, accuracy, a
 -   AUC (0.8935242): The model has excellent discriminative ability, with an AUC of 0.8935. This indicates that it can distinguish between patients who died and those who survived substantially better than random chance, and approaches the performance of a highly reliable classifier.
 
 # Results
+
 The final analysis included all 299 patients in the dataset. Although three observations were flagged as potentially influential, they were retained in the model after further diagnostics. Out of these 299 patients, 32% died during the follow-up period.
 
-The response variable, DEATH_EVENT, indicates whether a patient died during the follow-up period (1 = deceased, 0 = alive). The explanatory variables retained in the final model were age (in years), ejection fraction (percentage of blood leaving the heart per contraction), serum creatinine (mg/dL), serum sodium (mEq/L), and time (length of follow-up in days).These variables were selected through backward elimination using nested F-tests with a retention threshold of p < 0.1. The table below summarizes the estimated odds ratios, 95% confidence intervals, and p-values for each predictor in the model.
+The response variable, DEATH_EVENT, indicates whether a patient died during the follow-up period (1 = deceased, 0 = alive). The explanatory variables retained in the final model were age (in years), ejection fraction (percentage of blood leaving the heart per contraction), serum creatinine (mg/dL), serum sodium (mEq/L), and time (length of follow-up in days). These variables were selected through backward elimination using nested F-tests with a retention threshold of p < 0.1. The table below summarizes the estimated odds ratios, 95% confidence intervals, and p-values for each predictor in the model.
 
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
@@ -449,7 +450,7 @@ plot(residuals(final_model, type = "deviance"), ylab = "Deviance Residuals")
 
 ### Model performance
 
-```{r, echo = FALSE, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE}
 new_data <- read.csv("heart_failure_clinical_records_dataset.csv")
 new_data$anaemia <- factor(new_data$anaemia)
 new_data$diabetes <- factor(new_data$diabetes)
@@ -494,3 +495,28 @@ cat("Specificity:", specificity, "\n")
 cat("Accuracy:", accuracy, "\n")
 cat("AUC:", auc_value, "\n")
 ```
+
+### Results section
+
+```{r, warning = FALSE, message = FALSE}
+
+broom::tidy(final_model, conf.int = TRUE, exponentiate = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+mutate(term = dplyr::recode(term,
+  "age" = "Age",
+  "ejection_fraction" = "Ejection Fraction",
+  "serum_creatinine" = "Serum Creatinine",
+  "serum_sodium" = "Serum Sodium",
+  "time" = "Follow-up Time"
+)) %>%
+  select(term, estimate, conf.low, conf.high, p.value) %>%
+  knitr::kable(
+    col.names = c("Predictor", "Odds Ratio", "95% CI (Low)", "95% CI (High)", "p-value"),
+    digits = 3,
+    booktabs = TRUE,
+    caption = "Final Model: Odds Ratios and 95\\% Confidence Intervals"
+  ) %>%
+  kable_classic(full_width = FALSE, latex_options = "HOLD_position")
+
+```
+
