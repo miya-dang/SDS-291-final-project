@@ -1,7 +1,7 @@
 ---
-title: "SDS 291 Final Project Report"
+title: "SDS 291 Final Project Report: Identifying Key Predictors of Mortality in Heart Failure Patients - A Statistical Analysis"
 author: "Miya Dang, Mia Tran, Alua Birgebayeva"
-date: "Monday, April 28, 2025"
+date: "Thursday, May 8, 2025"
 format: 
   pdf:
     keep-tex: true
