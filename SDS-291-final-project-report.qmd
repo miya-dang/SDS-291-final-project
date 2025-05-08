@@ -17,6 +17,8 @@ format:
       - bottom=1in
 editor_options: 
   chunk_output_type: inline
+bibliography: citation.bib
+csl: apa.csl
 ---
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
@@ -45,15 +47,17 @@ heart_data$DEATH_EVENT <- factor(heart_data$DEATH_EVENT, levels = c(0,1),
 
 # Abstract
 
-This project analyzes the Heart Failure Clinical Records Dataset to identify key predictors of mortality among patients with heart failure. Using logistic regression and backward elimination, we developed a final model with five variables: age, ejection fraction, serum creatinine, serum sodium, and follow-up time. Model diagnostics confirmed the robustness of our approach, and performance metrics indicated strong predictive ability (sensitivity: 81.3%, specificity: 79.3%, AUC: 0.89). Our findings suggest that commonly available clinical variables can effectively predict patient outcomes and support early risk assessment in heart failure management.
+This study examines clinical predictors of mortality among patients with heart failure using the Heart Failure Clinical Records Dataset from the UCI Machine Learning Repository. The dataset contains detailed medical profiles of 299 patients, including demographic, clinical, and laboratory variables. Our objective was to build an interpretable and statistically robust model that could identify individuals at elevated risk of death during their follow-up period. After exploratory analysis and variable selection through backward elimination using nested F-tests (retention threshold: p \< 0.1), we developed a logistic regression model with five significant predictors: age, ejection fraction, serum creatinine, serum sodium, and follow-up time. Model diagnostics revealed no violations of key assumptions, and performance metrics indicated strong predictive ability, with sensitivity of 81.3%, specificity of 79.3%, accuracy of 79.9%, and an AUC of 0.8935. These results demonstrate that a small set of routinely collected clinical variables can provide valuable insight into patient prognosis and support early intervention in heart failure care.
 
 # Introduction
 
-Heart failure is a leading cause of mortality and hospitalization worldwide, especially among older adults. Identifying patients at high risk of death can improve clinical decision-making and patient care. In this study, we aim to determine which clinical and demographic factors are most predictive of mortality among heart failure patients using the Heart Failure Clinical Records Dataset.
+Heart failure is a chronic, progressive condition affecting over 64 million people globally and is a leading cause of morbidity and mortality, particularly among older adults [@savarese2017]. Timely identification of high-risk patients is critical in managing the disease and preventing adverse outcomes. In clinical practice, easily accessible indicators such as age, kidney function, and cardiac performance are often used to guide care decisions. However, the predictive value of these factors---especially in combination---requires careful statistical modeling to ensure reliability and interpretability.
 
-Our research question is: ***Which variables best predict death during the follow-up period after a heart failure diagnosis?***
+In this project, we seek to answer the following research question: ***Which clinical and demographic variables are most predictive of mortality in patients with heart failure?*** To address this, we utilized the Heart Failure Clinical Records Dataset, which includes 13 variables measured during the follow-up of 299 patients. Our primary outcome of interest is `DEATH_EVENT`, a binary indicator of whether the patient died during the follow-up period.
 
-We apply logistic regression with backward elimination to build a parsimonious and interpretable model. Prior studies have highlighted the roles of age, ejection fraction, and kidney function in heart failure outcomes (Choi et al., 2017; Ahmad et al., 2018), but many models lack transparency or validation. This project contributes a validated model using routine clinical measures and emphasizes model diagnostics to ensure reliability. Our goal is to support early risk assessment in heart failure using accessible patient data.
+Prior research has explored predictors of heart failure outcomes using machine learning and traditional statistical models. For example, Choi et al. [@choi2017] and Ahmad et al. [@ahmad2018] identified low ejection fraction and elevated serum creatinine as important mortality indicators, while Sulaiman et al. [@sulaiman2020] highlighted the role of sodium levels in cardiac function. While these studies provided clinical insights, many models lacked transparency, and few incorporated robust diagnostic checks to assess model assumptions and outliers.
+
+To fill this gap, our study applies a multiple logistic regression framework combined with backward elimination to select a parsimonious set of predictors. We evaluate the model through statistical diagnostics, including leverage, residuals, Cook's distance, and multicollinearity analysis. We also assess model performance using classification metrics and the ROC curve. By focusing on routinely available variables and prioritizing interpretability, our goal is to create a model that is both clinically meaningful and methodologically sound---supporting real-world applications in early risk assessment for heart failure patients.
 
 # Methods
 
@@ -199,8 +203,7 @@ We evaluated the model's performance using sensitivity, specificity, accuracy, a
 
 The final analysis included all 299 patients in the dataset. Although three observations were flagged as potentially influential, they were retained in the model after further diagnostics. Out of these 299 patients, 32% died during the follow-up period.
 
-The response variable, DEATH_EVENT, indicates whether a patient died during the follow-up period (1 = deceased, 0 = alive). The explanatory variables retained in the final model were age (in years), ejection fraction (percentage of blood leaving the heart per contraction), serum creatinine (mg/dL), serum sodium (mEq/L), and time (length of follow-up in days). These variables were selected through backward elimination using nested F-tests with a retention threshold of p < 0.1. The table below summarizes the estimated odds ratios, 95% confidence intervals, and p-values for each predictor in the model.
-
+The response variable, DEATH_EVENT, indicates whether a patient died during the follow-up period (1 = deceased, 0 = alive). The explanatory variables retained in the final model were age (in years), ejection fraction (percentage of blood leaving the heart per contraction), serum creatinine (mg/dL), serum sodium (mEq/L), and time (length of follow-up in days). These variables were selected through backward elimination using nested F-tests with a retention threshold of p \< 0.1. The table below summarizes the estimated odds ratios, 95% confidence intervals, and p-values for each predictor in the model.
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE}
 library(broom)
@@ -227,24 +230,24 @@ mutate(term = dplyr::recode(term,
   kable_classic(full_width = FALSE, latex_options = "HOLD_position")
 
 ```
+
 Each predictor in the final model had a clear association with the probability of death.
 
-- **Age**: Each additional year increased the odds of death by approximately 4.3% (OR = 1.043, 95% CI: [1.014, 1.076], p = 0.005).
+-   **Age**: Each additional year increased the odds of death by approximately 4.3% (OR = 1.043, 95% CI: \[1.014, 1.076\], p = 0.005).
 
-- **Ejection Fraction**: Each 1% increase reduced the odds of death by 7.1% (OR = 0.929, 95% CI: [0.899, 0.957], p < 0.001).
+-   **Ejection Fraction**: Each 1% increase reduced the odds of death by 7.1% (OR = 0.929, 95% CI: \[0.899, 0.957\], p \< 0.001).
 
-- **Serum Creatinine**: Each 1 mg/dL increase more than doubled the odds of death (OR = 1.986, 95% CI: [1.421, 2.874], p < 0.001).
+-   **Serum Creatinine**: Each 1 mg/dL increase more than doubled the odds of death (OR = 1.986, 95% CI: \[1.421, 2.874\], p \< 0.001).
 
-- **Serum Sodium**: While not statistically significant, the odds ratio suggests a 6.3% decrease in risk per unit increase (OR = 0.937, 95% CI: [0.868, 1.011], p = 0.093).
+-   **Serum Sodium**: While not statistically significant, the odds ratio suggests a 6.3% decrease in risk per unit increase (OR = 0.937, 95% CI: \[0.868, 1.011\], p = 0.093).
 
-- **Follow-up Time**: Each additional day of follow-up was associated with a 2.1% decrease in the odds of death (OR = 0.979, 95% CI: [0.973, 0.985], p < 0.001).
+-   **Follow-up Time**: Each additional day of follow-up was associated with a 2.1% decrease in the odds of death (OR = 0.979, 95% CI: \[0.973, 0.985\], p \< 0.001).
 
 To evaluate model performance, we selected a classification threshold of $\pi$ = 0.3 to prioritize sensitivity. The model correctly identified 81.3% of patients who died (sensitivity) and 79.3% of patients who survived (specificity). Overall classification accuracy was 79.9%. The area under the ROC curve (AUC) was 0.8935, indicating excellent discriminative ability.
 
 Figure 1 shows boxplots of ejection fraction and serum creatinine by survival outcome. Patients who died had noticeably lower ejection fractions and higher creatinine levels, reinforcing their inclusion in the final model.
 
 These findings address our research question by identifying five routinely available variables that effectively predict mortality among patients with heart failure.
-
 
 # Discussion
 
@@ -256,7 +259,7 @@ These findings directly answer our research question and are supported by both s
 
 Despite these strengths, our analysis has several limitations. First, the dataset contains only 299 observations, which limits the generalizability of our findings. All data came from a single source, and we do not have access to variables such as treatment type, comorbidities, or socioeconomic status. These missing factors may introduce omitted variable bias. Additionally, our model assumes linearity in the log-odds and does not explore potential interactions or non-linear effects.
 
-Still, the study has notable strengths. The final model is interpretable, relies on common clinical measures, and passed all major diagnostic checks (e.g., residuals, Cook’s distance, VIFs). Our variable selection process used nested F-tests, and we retained cases flagged as influential only after confirming they did not distort results. These decisions reflect a balance between statistical rigor and real-world applicability.
+Still, the study has notable strengths. The final model is interpretable, relies on common clinical measures, and passed all major diagnostic checks (e.g., residuals, Cook's distance, VIFs). Our variable selection process used nested F-tests, and we retained cases flagged as influential only after confirming they did not distort results. These decisions reflect a balance between statistical rigor and real-world applicability.
 
 In summary, this analysis provides strong evidence that five routine clinical measures can meaningfully predict death in heart failure patients. However, our conclusions are specific to the dataset at hand and should not be generalized without further validation. These findings offer a starting point for clinicians or researchers seeking to build early warning tools using accessible patient data.
 
@@ -519,4 +522,3 @@ mutate(term = dplyr::recode(term,
   kable_classic(full_width = FALSE, latex_options = "HOLD_position")
 
 ```
-
