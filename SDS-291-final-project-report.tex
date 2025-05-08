@@ -235,7 +235,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, boxrule=0pt, interior hidden, frame hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, breakable, frame hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, sharp corners, boxrule=0pt]}{\end{tcolorbox}}\fi
 
 \hypertarget{abstract}{%
 \section{Abstract}\label{abstract}}
@@ -308,13 +308,13 @@ heart failure patients.
 
 The dataset we analyzed in this study is the Heart Failure Clinical
 Records Dataset, originally sourced from the UCI Machine Learning
-Repository. It contains the medical records of 299 patients who
-experienced heart failure, collected during their clinical follow-up
-period. Each observation is a patient profile. The response variable,
-DEATH\_EVENT, is a binary outcome indicating whether a patient died
-during the follow-up period (1 = deceased, 0 = alive). All eleven
-explanatory variables were initially considered, including demographic
-factors, clinical profile, as well as laboratory blood tests
+Repository (Chicco \& Jurman, 2020). It contains the medical records of
+299 patients who experienced heart failure, collected during their
+clinical follow-up period. Each observation is a patient profile. The
+response variable, DEATH\_EVENT, is a binary outcome indicating whether
+a patient died during the follow-up period (1 = deceased, 0 = alive).
+All eleven explanatory variables were initially considered, including
+demographic factors, clinical profile, as well as laboratory blood tests
 measurements. Details about each variable can be seen in Table 1. No
 missing data were reported in the dataset.
 
@@ -662,6 +662,54 @@ patients. However, our conclusions are specific to the dataset at hand
 and should not be generalized without further validation. These findings
 offer a starting point for clinicians or researchers seeking to build
 early warning tools using accessible patient data.
+
+\hypertarget{discussion-mia-suggestion}{%
+\section{Discussion (Mia suggestion)}\label{discussion-mia-suggestion}}
+
+This study set out to answer the question: \textbf{\emph{Which clinical
+and demographic variables are most predictive of mortality in patients
+with heart failure?}} Using logistic regression with backward
+elimination, we identified five key predictors: age, ejection fraction,
+serum creatinine, serum sodium, and follow-up time.
+
+Our results show that each of these variables provides meaningful
+insight into patient mortality risk. Older age, lower ejection fraction,
+and higher serum creatinine levels were strongly associated with
+increased likelihood of death --- findings consistent with established
+clinical knowledge (Ahmad et al., 2018; Choi \& Lee, 2017). Although
+serum sodium was not statistically significant at the 5\% level, its
+direction of effect and borderline p-value suggest potential clinical
+importance, especially given its role in fluid regulation and heart
+function (Sulaiman et al., 2020). Interestingly, longer follow-up time
+was associated with a lower risk of death, which may reflect that
+patients who survived longer had milder disease progression or more
+successful interventions.
+
+These findings address our research question while balancing statistical
+rigor and clinical interpretability. The model's strong performance (AUC
+= 0.8935, sensitivity = 81.3\%) suggests it could serve as a practical
+tool for early risk stratification in heart failure patients. Its
+reliance on routinely collected clinical data also enhances its
+real-world utility.
+
+However, this analysis is limited by its sample size (n = 299) and the
+absence of variables like treatment regimen, comorbidities, or
+socioeconomic status, which may influence mortality risk. Furthermore,
+the model assumes linear relationships and does not include potential
+interaction effects.
+
+Despite these limitations, our approach offers several strengths. We
+applied rigorous diagnostic checks to confirm model assumptions,
+retained potentially influential cases only after verification, and
+prioritized simplicity for interpretability.
+
+In sum, our study demonstrates that a small, interpretable set of
+clinical variables can effectively predict mortality in heart failure
+patients. Future work should validate this model on larger, more diverse
+populations and explore enhancements through interaction terms or
+non-linear modeling. Nonetheless, our findings provide a foundation for
+developing accessible, evidence-based tools to support clinical
+decision-making and early intervention.
 
 \hypertarget{data-analysis-appendix}{%
 \section{Data Analysis Appendix}\label{data-analysis-appendix}}
@@ -1372,6 +1420,12 @@ clinically distinct phenotypes, and detect heterogeneity in response to
 therapy in a large cohort of heart failure patients. \emph{Journal of
 the American Heart Association}, \emph{7}(8), e008081.
 \url{https://doi.org/10.1161/JAHA.117.008081}
+
+\leavevmode\vadjust pre{\hypertarget{ref-uci2020}{}}%
+Chicco, D., \& Jurman, G. (2020). \emph{Heart failure clinical records
+data set}.
+\url{https://archive.ics.uci.edu/ml/datasets/Heart+failure+clinical+records}.
+\url{https://archive.ics.uci.edu/ml/datasets/Heart+failure+clinical+records}
 
 \leavevmode\vadjust pre{\hypertarget{ref-choi2017}{}}%
 Choi, E., \& Lee, J. (2017). Predicting mortality in heart failure
